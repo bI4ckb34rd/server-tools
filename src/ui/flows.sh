@@ -189,14 +189,14 @@ _restart_candidates() {
           [[ -n $line && -z ${seen[c${line%% *}]:-} ]] || continue
           seen[c${line%% *}]=1
           printf 'container\t%s\n' "${line%% *}"
-        done < <(grep -iE "$re" <<<"$ST_F_CONTAINERS")
+        done < <(grep -iE "$re" <<<"$ST_F_CONTAINERS" || true) # no match: nothing to restart
         ;;
       p | u)
         while IFS= read -r unit; do
           [[ -n $unit && -z ${seen[u$unit]:-} ]] || continue
           seen[u$unit]=1
           printf 'service\t%s\n' "$unit"
-        done < <(grep -iE "^(${re})(-server|-client|@.+)?$" <<<"$ST_F_UNITS")
+        done < <(grep -iE "^(${re})(-server|-client|@.+)?$" <<<"$ST_F_UNITS" || true) # no match: nothing to restart
         ;;
     esac
   done

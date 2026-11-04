@@ -156,8 +156,8 @@ wg_listen_ports() {
   for bin in wg awg; do
     has_cmd "$bin" || continue
     out="$("$bin" show all listen-port 2>/dev/null)" || continue
-    awk 'NF {print $NF}' <<<"$out"
-  done | grep -E '^[0-9]+$' | sort -un
+    awk '$NF ~ /^[0-9]+$/ {print $NF}' <<<"$out"
+  done | sort -un
   return 0
 }
 

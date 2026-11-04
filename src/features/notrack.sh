@@ -64,7 +64,7 @@ _notrack_specs_v2() {
 _notrack_candidates() {
   has_cmd ss || return 0
   local excl listeners
-  excl="$(printf '%s\n%s\n%s\n' "$1" "$2" "$3" | grep -E '^[0-9]+$' | sort -un)"
+  excl="$(printf '%s\n%s\n%s\n' "$1" "$2" "$3" | awk '/^[0-9]+$/' | sort -un)"
   listeners="$(ss -tln 2>/dev/null)" || return 0
   ss_listen_ports "$listeners" | ports_subtract "$excl" | paste -sd, -
 }
@@ -130,10 +130,12 @@ _notrack_write_unit() {
   } >"$ST_NOTRACK_UNIT"
 }
 
-# notrack_unit_ports — ports the persisted unit covers (self-describing).
+# notrack_unit_ports [UNIT] — ports the persisted unit covers (self-describing).
+# shellcheck disable=SC2120 # the argument is for tests
 notrack_unit_ports() {
-  [[ -f $ST_NOTRACK_UNIT ]] || return 0
-  grep -oE -- '--dport [0-9]+' "$ST_NOTRACK_UNIT" | awk '{print $2}' | sort -un
+  local unit="${1:-$ST_NOTRACK_UNIT}"
+  [[ -f $unit ]] || return 0
+  awk '{for (i = 1; i < NF; i++) if ($i == "--dport" && $(i + 1) ~ /^[0-9]+$/) print $(i + 1)}' "$unit" | sort -un
 }
 
 # notrack_unit_is_v2 — the persisted unit predates the addrtype scope fix.

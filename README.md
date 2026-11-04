@@ -9,7 +9,7 @@ kernel, NIC, firewall path and container engine for exactly that. Every
 decision comes with its reason, every change can be rolled back, and the
 result survives reboots.
 
-> **2.4.5** · one bash file · runs as root · Ubuntu 20.04+ / Debian 11+
+> **2.4.6** · one bash file · runs as root · Ubuntu 20.04+ / Debian 11+
 > (other distributions with apt, dnf/yum or pacman generally work) ·
 > فارسی: [README.fa.md](README.fa.md)
 

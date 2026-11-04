@@ -1,6 +1,6 @@
 # User guide
 
-ServerTools 2.4.5 · فارسی: [GUIDE.fa.md](GUIDE.fa.md)
+ServerTools 2.4.6 · فارسی: [GUIDE.fa.md](GUIDE.fa.md)
 
 ## 1. What it is
 

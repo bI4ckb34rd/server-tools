@@ -30,6 +30,7 @@ _ft_devices() {
     IFS='|' read -r name kind _rest <<<"$t"
     [[ -d /sys/class/net/$name ]] && printf '%s\n' "$name"
   done
+  return 0
 }
 
 # _ft_ruleset DEV... — the nft ruleset text.

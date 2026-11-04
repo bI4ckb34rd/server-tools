@@ -1,6 +1,6 @@
 # FAQ
 
-ServerTools 2.4.5 · فارسی: [FAQ.fa.md](FAQ.fa.md)
+ServerTools 2.4.6 · فارسی: [FAQ.fa.md](FAQ.fa.md)
 
 ## Is running Quick Optimize (menu 1) enough?
 

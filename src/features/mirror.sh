@@ -30,6 +30,7 @@ _mirror_files() {
     grep -qE '(archive|deb|security)\.(ubuntu|debian)\.org|ubuntu\.com/ubuntu|arvancloud|iranrepo' "$f" 2>/dev/null &&
       printf '%s\n' "$f"
   done
+  return 0
 }
 
 mirror_apply() {

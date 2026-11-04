@@ -474,5 +474,36 @@ eq open_runs "A B" "$(manifest_open_runs | lines)"
 manifest_mark_rolled_back B
 eq step_back "A" "$(manifest_latest_run)"
 
+# Helpers whose "nothing found" is normal must not trip the program's ERR
+# trap (field report 2.4.5: twenty "unhandled failure … grep" lines after
+# Quick Optimize on a relay with no proxy services).
+quiet_err() { # quiet_err NAME CMD... — CMD runs under the ERR trap; none may fire
+  local name="$1" log="${SANDBOX}/err.log"
+  shift
+  : >"$log"
+  (
+    set -E -o pipefail
+    trap 'printf "%s\n" "$BASH_COMMAND" >>"'"$log"'"' ERR
+    "$@" >/dev/null 2>&1
+    true
+  )
+  eq "$name" "" "$(cat "$log")"
+}
+ST_F_UNITS=$'ssh\ncron\nnftables' ST_F_CONTAINERS=''
+quiet_err restart_none _restart_candidates
+ST_F_UNITS=$'xray\nssh'
+eq restart_xray $'service\txray' "$(_restart_candidates)"
+ST_F_UNITS=''
+quiet_err ft_devices_none _ft_devices
+quiet_err mirror_none _mirror_files
+quiet_err wg_ports_none wg_listen_ports
+nt_unit="${SANDBOX}/notrack.service"
+printf 'ExecStart=/bin/true\n' >"$nt_unit"
+quiet_err notrack_ports_none notrack_unit_ports "$nt_unit"
+printf 'ExecStart=iptables -t raw -A PREROUTING -p tcp --dport 443 -j CT --notrack\n' >"$nt_unit"
+eq notrack_ports 443 "$(notrack_unit_ports "$nt_unit")"
+printf '# date\tbackend\n' >"$ST_SPEED_HISTORY"
+quiet_err speed_history_empty st_speed_history
+
 printf 'unit: %d passed, %d failed\n' "$PASS" "$FAIL"
 ((FAIL == 0))

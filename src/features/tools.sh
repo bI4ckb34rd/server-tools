@@ -138,7 +138,7 @@ st_speed_history() {
   while IFS=$'\t' read -r d b s p dl ul _u; do
     [[ -n $d && $d != \#* ]] || continue
     printf '    %-16s %-7s %8s %12s %12s  %s\n' "$d" "$b" "${p} ms" "$dl" "$ul" "${s:0:40}"
-  done < <(grep -v '^#' "$ST_SPEED_HISTORY" | tail -n "${1:-5}")
+  done < <(awk 'NF && !/^#/' "$ST_SPEED_HISTORY" | tail -n "${1:-5}")
   return 0
 }
 
@@ -280,7 +280,7 @@ _st_ookla_card() {
   ping="$(_st_json_num "$ping_obj" latency)"
   jit="$(_st_json_num "$ping_obj" jitter)"
   # Exactly two "bandwidth" fields: download first, upload second.
-  mapfile -t bws < <(grep -oE '"bandwidth":[0-9]+' <<<"$json" | grep -oE '[0-9]+')
+  mapfile -t bws < <(grep -oE '"bandwidth":[0-9]+' <<<"$json" | grep -oE '[0-9]+' || true) # absent: shown as n/a
   loss="$(_st_json_num "$json" packetLoss)"
   isp="$(_st_json_str "$json" isp)"
   url="$(grep -oE '"url":"[^"]*"' <<<"$json" | head -1)" || url=''

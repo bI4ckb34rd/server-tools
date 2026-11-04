@@ -3,6 +3,18 @@
 Notable changes, newest first. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Releases 2.0.0 – 2.4.4: [docs/archive/CHANGELOG-2.0-2.4.4.md](docs/archive/CHANGELOG-2.0-2.4.4.md).
 
+## [2.4.6] — 2026-11-03
+
+### Fixed
+
+- Quick Optimize no longer ends with a burst of `ERROR unhandled failure …
+  grep` lines on servers without proxy services (a relay, for example). The
+  tuning itself was already applied; the noise came from the restart offer.
+  The same "nothing found counts as a failure" pattern was removed from
+  the speed-test history, the Ookla result card, the NOTRACK port reader,
+  the WireGuard port reader, the flowtable device list and the mirror
+  file list.
+
 ## [2.4.5] — 2026-11-03
 
 A redesign around **roles**: ServerTools now works out what a server does
