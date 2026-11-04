@@ -45,6 +45,7 @@ detect_virt() {
 # virt_is_container [VIRT] — 0 inside an OS container (LXC, OpenVZ,
 # Docker, nspawn): the kernel belongs to the host, so swap, cpufreq, the
 # clock and many sysctls are not ours to change.
+# shellcheck disable=SC2120 # the argument is optional
 virt_is_container() {
   case "${1:-${ST_F_VIRT:-unknown}}" in
     lxc | lxc-libvirt | openvz | docker | podman | systemd-nspawn | rkt | proot | pouch) return 0 ;;

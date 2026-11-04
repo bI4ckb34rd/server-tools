@@ -341,6 +341,7 @@ _dns_pin_networkmanager() {
 # _dns_pin_dhclient — dhclient rewrites /etc/resolv.conf (or feeds
 # resolvconf) at every boot and lease renewal. A managed block tells it to
 # hand out OUR servers instead (tracked; replaced, never duplicated).
+# shellcheck disable=SC2120 # the argument is optional
 _dns_pin_dhclient() {
   local conf="${1:-$ST_DHCLIENT_CONF}"
   [[ -f $conf ]] && has_cmd dhclient || return 0

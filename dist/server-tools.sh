@@ -423,6 +423,7 @@ detect_virt() {
 # virt_is_container [VIRT] — 0 inside an OS container (LXC, OpenVZ,
 # Docker, nspawn): the kernel belongs to the host, so swap, cpufreq, the
 # clock and many sysctls are not ours to change.
+# shellcheck disable=SC2120 # the argument is optional
 virt_is_container() {
   case "${1:-${ST_F_VIRT:-unknown}}" in
     lxc | lxc-libvirt | openvz | docker | podman | systemd-nspawn | rkt | proot | pouch) return 0 ;;
@@ -4755,6 +4756,7 @@ _dns_pin_networkmanager() {
 # _dns_pin_dhclient — dhclient rewrites /etc/resolv.conf (or feeds
 # resolvconf) at every boot and lease renewal. A managed block tells it to
 # hand out OUR servers instead (tracked; replaced, never duplicated).
+# shellcheck disable=SC2120 # the argument is optional
 _dns_pin_dhclient() {
   local conf="${1:-$ST_DHCLIENT_CONF}"
   [[ -f $conf ]] && has_cmd dhclient || return 0
@@ -8564,6 +8566,7 @@ _optimize_applicable() {
 # plan_resolve [ROLES] — the full decision chain, shared by every flow.
 # Prerequisites are installed first (quietly; reported in the plan) so the
 # facts the policy reads — channels, offloads, nft support — are complete.
+# shellcheck disable=SC2120 # the argument is optional
 plan_resolve() {
   _plan_prerequisites
   roles_resolve "${1:-$ST_CLI_ROLES}"

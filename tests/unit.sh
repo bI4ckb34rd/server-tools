@@ -7,7 +7,7 @@
 # rollback in a sandbox. No root, no network, no changes to the host.
 # ============================================================================
 # The sourced program consumes the globals set below; ShellCheck cannot see that.
-# shellcheck disable=SC2034,SC2153,SC2154,SC2329
+# shellcheck disable=SC2034,SC2153,SC2154,SC2317,SC2329
 set -Eeuo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
