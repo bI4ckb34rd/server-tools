@@ -2,3 +2,6 @@ shell=bash
 
 # SC1091: "not following sourced file" — we intentionally source /etc/os-release.
 disable=SC1091
+
+# SC2119: optional-argument helpers (engines_summary [ROLE]) are called bare on purpose.
+disable=SC2119

@@ -1,134 +1,113 @@
-# 🧰 ServerTools
+# ServerTools
 
-ابزار **بهینه‌سازی حرفه‌ای سرور لینوکس** با مصرف زمان‌اجرای صفر — ساخته‌شده برای
-زیرساخت VPN پرترافیک: نودهای Xray/Reality (`marzban-node`، `pg-node`/Pasarguard،
-`marznode`)، پنل‌های Marzban/Pasarguard، وایرگارد، x-ui و Hiddify — و همچنین
-بهینه‌سازی عمومی هر سرور لینوکسی.
+**Role-aware Linux server tuning — for VPN nodes, tunnels and relays, and
+for the everyday servers next to them.**
 
-> نسخهٔ پایدار: **v2.4.0** · یک فایل، بدون وابستگی، اجرا به‌عنوان root.
-> نسخهٔ ۱ در [`legacy/`](legacy/) فریز شده و دیگر آپدیت نمی‌گیرد.
+One command works out what a server *does* — proxy node, panel, WireGuard
+gateway, GRE relay, Docker host running a bot, database — and tunes the
+kernel, NIC, firewall path and container engine for exactly that. Every
+decision comes with its reason, every change can be rolled back, and the
+result survives reboots.
 
-📖 **[راهنمای کامل صفر تا صد ← docs/GUIDE.md](docs/GUIDE.md)**
+> **2.4.5** · one bash file · runs as root · Ubuntu 20.04+ / Debian 11+
+> (other distributions with apt, dnf/yum or pacman generally work) ·
+> فارسی: [README.fa.md](README.fa.md)
 
-## 📥 نصب و اجرا
-
-اجرای مستقیم:
-
-```bash
-bash <(curl -fsSL4 https://raw.githubusercontent.com/Sir-Adnan/server-tools/main/dist/server-tools.sh)
-```
-
-نصب به‌عنوان دستور `st` (پیشنهادی):
+## Install
 
 ```bash
 bash <(curl -fsSL4 https://raw.githubusercontent.com/Sir-Adnan/server-tools/main/dist/server-tools.sh) --install
 ```
 
-از این پس فقط `st` را اجرا کنید؛ آپدیت هم با `st --update`.
+Then run `st` and press **1 (Quick Optimize)**. Update with `st --update`.
+Missing tools (`ethtool`, `nftables`, `jq`, …) are installed automatically
+and listed on screen; `--no-install` turns that off. A host tuned by an older
+version is upgraded on the first run, tracked like every other change.
 
-## ⚡ یک دستور، کل سرور بهینه
-
-کافی است `st` را بزنید و گزینهٔ **۱ (Quick Optimize)** را انتخاب کنید. ابزار
-workload سرور را خودکار تشخیص می‌دهد و این لایه‌ها را روی هم اعمال می‌کند:
-
-- **لایهٔ پایه (همیشه):** BBR + fq، صف‌های اتصال و بافرها بر اساس RAM، تایمرها و
-  keepalive، سخت‌سازی امن، `tcp_min_snd_mss` (رفع CVE-2019-11479)، و سقف‌های
-  file/map.
-- **لایهٔ workload (نود VPN):** فورواردینگ IPv4+IPv6، conntrack سایزشده،
-  تایم‌اوت‌های بهینه، و رزرو خودکار پورت‌های سرویس.
-- **لایهٔ دیتاپث (perf):** پخش پردازش کارت شبکه روی همهٔ هسته‌ها (RPS/RFS/XPS)،
-  governor روی `performance`، و THP روی `madvise` — همه بدون قطعی و zero-footprint.
-- **تکمیلی:** سواپ (zram یا فایل)، سقف nofile یک‌میلیون، محدودسازی لاگ journald + NTP،
-  و انتخاب DNS که واقعاً می‌چسبد.
-
-همه چیز idempotent است: اجرای دوباره امن است و به همان وضعیت می‌رسد.
-
-## 🧭 امکانات (منوی برنامه)
-
-| بخش | چه‌کار می‌کند |
-| --- | --- |
-| **Optimize** | Quick (خودکار، پیشنهادی) و Custom (انتخاب دستی پروفایل و ماژول‌ها) |
-| **Inspect** | System Status کامل · Doctor برای بررسی drift (آیا هنوز اعمال است؟) |
-| **Recover** | Rollback آخرین اجرا یا بازگشت کامل به وضعیت اولیه |
-| **Secure** | UFW · fail2ban · سخت‌سازی SSH · anti-abuse · محدودسازی API نود |
-| **Tools** | پینگ · **اسپیدتست با انتخاب سرور/لوکیشن (Ookla یا HTTP)** · بنچمارک · MSS · **NOTRACK** · **غیرفعال‌سازی کامل IPv6** · Live view · میرور APT · گزارش |
-| **Node & Docker** | بکاپ کانفیگ نود · نصب رسمی نودها · سقف فایل کانتینرها |
-
-## ✨ اصول طراحی
-
-| اصل | توضیح |
-| --- | --- |
-| مصرف صفر ⚡ | «یک‌بار اجرا»: کرنل را تنظیم می‌کند و خارج می‌شود. هیچ daemon/cron/telemetry. چه ۱۰۰ کاربر چه ۱۰۰هزار، سهم ابزار از CPU/RAM صفر است. |
-| ظرفیت‌محور 📊 | conntrack و بافرها بر اساس تیر یا **تعداد واقعی کاربر** (`--users`)، با تخمین RAM و هشدار صادقانه پیش از اعمال. |
-| بی‌رگرسیون 🛡️ | کلیدهای ظرفیت به‌صورت سقفی تنظیم می‌شوند: هرگز زیر مقدار خودِ کرنل مدرن نمی‌روند. |
-| رول‌بک واقعی ♻️ | هر تغییر پیش از اعمال در manifest ثبت و نسخهٔ دست‌نخوردهٔ هر فایل برای همیشه نگه داشته می‌شود. |
-| گزارش صادقانه ✅ | هیچ «OK» دروغین: هر مرحله وضعیت واقعی‌اش (OK/WARN/FAILED) را نشان می‌دهد و DNS و بقیه بعد از اعمال واقعاً verify می‌شوند. |
-| کیفیت تست‌شده 🧪 | لینت ShellCheck + shfmt در CI و تست بوت روی Ubuntu 20.04/22.04/24.04 و Debian 11/12. |
-
-## ⌨️ گزینه‌های CLI
-
-```text
---status              گزارش کامل وضعیت و خروج
---auto                بهینه‌سازی غیرتعاملی (پایه + پروفایل تشخیص‌داده‌شده)
-      --profile NAME  general | vpn-node | wireguard | panel | full
-      --tier S|M|L|XL --users N   --dns cloudflare|ip1,ip2
-      --no-swap  --no-limits  --no-extras  --no-perf
---dry-run             نمایش پلن و diff دقیق sysctl، بدون اعمال هیچ تغییری
---verify              Doctor: آیا همه‌چیز هنوز اعمال است؟ (تشخیص drift)
---report              گزارش متنی کامل برای تیکت/پشتیبانی
---rollback            بازگردانی آخرین اجرای ثبت‌شده
---rollback-original   بازگشت کامل به وضعیت قبل از اولین اجرا
---install / --update  نصب/آپدیت خودکار دستور st
---json                خروجی ماشین‌خوان (برای --verify)
---no-color · --debug · -v · -h
-```
-
-کدهای خروج (برای Ansible/CI): `0` موفق · `1` شکست حداقل یک مرحله · `2` خطای دستور ·
-`3` اعمال شد ولی با هشدار یا drift.
-
-نمونه برای مدیریت چند نود:
+## Quick start
 
 ```bash
-st --auto --profile vpn-node --users 10000 --dns cloudflare
-st --verify --json     # بررسی drift شبانه از automation خودتان
+st                      # menu → 1 Quick Optimize
+st --dry-run            # the plan, each decision with its reason, the exact diff
+st --auto               # non-interactive: detect and apply
+st --diagnose           # measure: per-core softirq, drops, queues, conntrack
+st --verify             # still in effect? (run it after a reboot)
+st --rollback           # undo the newest run (again = one run further back)
 ```
 
-## 📚 مستندات
+## One tool, every kind of server
 
-[📖 راهنمای کامل](docs/GUIDE.md) ·
-[معماری](docs/ARCHITECTURE.md) ·
-[پروفایل‌ها](docs/PROFILES.md) ·
-[مشخصات sysctl](docs/SYSCTL.md) ·
-[رول‌بک](docs/ROLLBACK.md) ·
-[❓ سوالات پرتکرار](docs/FAQ.md) ·
-[تغییرات](CHANGELOG.md)
+| Server | Detected as | What it gets beyond the base layer |
+| --- | --- | --- |
+| x-ui / 3x-ui, Marzban / Pasarguard / Remnawave node | `proxy` | fq + BBR, RPS/RFS on single-queue NICs, conntrack sized from RAM |
+| Panel with MySQL / PostgreSQL / Redis | `panel db` | tier capped at M, bounded write-back, `overcommit=1` for Redis |
+| Telegram bot or website in Docker | `web db` + Docker | bounded container logs, live-restore, conntrack timeouts for Docker NAT |
+| GRE / IPIP + DNAT relay | `tunnel relay` | fq_codel, RPS without the IRQ CPU, no RFS, MSS clamp, fast-path hint |
+| WireGuard / AmneziaWG / OpenVPN | `vpn` | UDP GRO forwarding, long UDP NAT timeouts, MSS clamp |
+| Backhaul / Rathole / gost / frp | `utunnel` | local + forwarding tuning, nofile |
+| HAProxy / nginx relay, plain bot | `web` / `general` | the complete base layer |
 
-## 🏗️ ساختار مخزن
+Roles combine (an Xray node that is also a GRE endpoint gets both), and
+detection can be overridden: `st --auto --role relay,tunnel`.
+Details: [docs/ROLES.md](docs/ROLES.md).
+
+## What it tunes
+
+| Area | What happens |
+| --- | --- |
+| Congestion & queueing | BBR; `fq` where TCP terminates locally, `fq_codel` on pure forwarders — applied live without collapsing multi-queue `mq` |
+| NIC | unused virtio queue pairs enabled, GRO and UDP GRO forwarding, receive interrupts spread when stuck on one CPU, RPS/RFS only where hardware cannot spread |
+| Kernel network stack | accept queues, buffers, timers, keepalive, reserved service ports — ceilings that never lower a modern kernel's values |
+| Conntrack | sized and timed out wherever it is live (forwarders, Docker, UFW); forwarders get a table sized from RAM headroom |
+| Forwarding | IP forwarding, router hardening, MSS clamping into tunnels |
+| Databases & Docker | bounded write-back, Redis overcommit; daemon.json merged (your keys win) |
+| System | swap (file or zram), nofile, inotify, journald cap, NTP, DNS that stays set after reboots and DHCP renewals |
+| Opt-in | UFW (forwarding-aware), fail2ban, SSH hardening, NOTRACK, nftables fast path, IPv6 off, XanMod/BBRv3, APT mirror |
+
+Every key and its rationale: [docs/SYSCTL.md](docs/SYSCTL.md).
+
+## Built to be trusted
+
+| | |
+| --- | --- |
+| **Survives reboots** | sysctl file ordered after `/etc/sysctl.conf`, firewall rule units after the firewall managers, DNS pinned in the network manager, IPv6-off re-applied per interface — and `st --verify` / the dashboard say so when something drifted anyway |
+| **Reversible** | files, live `/sys` values, NIC settings, qdiscs, firewall rules and `/etc/sysctl.conf` edits are recorded before they change |
+| **Honest** | each step reports OK / WARN / FAILED / SKIPPED and is checked against the live system |
+| **Light** | runs in seconds; nothing stays resident — boot persistence uses oneshot units that exit |
+| **Tested** | ShellCheck + shfmt, 150 unit checks, and a real-kernel GRE + DNAT relay test in a network namespace |
+
+## CLI
 
 ```text
-src/       سورس ماژولار (core/ + modules/ + menu + main)
-build.sh   کامپایل src/ به یک فایل واحد
-dist/      خروجی build (فایلی که کاربر نهایی اجرا می‌کند)
-docs/      مستندات و مشخصات فنی
-tests/     تست‌های smoke
-legacy/    نسخهٔ ۱ (فریزشده)
+Actions   --status | --auto | --dry-run | --diagnose | --verify [--json] | --report
+          --rollback | --rollback-original | --settings | --set KEY=VALUE
+          --ipv6 on|off|status | --speedtest | --install | --update
+Planning  --role proxy,panel,vpn,tunnel,relay,utunnel,web,db,general
+(--auto,  --tier S|M|L|XL   --users N   --dns cloudflare|shecan|ip1,ip2
+--dry-run) --no-swap --no-limits --no-extras --no-perf --no-mss --no-docker
+General   --no-install --no-color --debug -v -h
 ```
 
-## 🛠️ توسعه
+Exit codes: `0` ok · `1` a step failed · `2` usage error · `3` applied with
+warnings, or drift found. All tunables: `st --settings`.
 
-```bash
-./build.sh        # ساخت dist/server-tools.sh
-make lint         # shellcheck + shfmt
-./tests/smoke.sh  # تست سریع بدون نیاز به root
-```
+## Documentation
 
-اصول کدنویسی در [CLAUDE.md](CLAUDE.md) ثبت شده‌اند: بدون وابستگی جدید، بدون
-`|| true` بی‌دلیل، ثبت هر تغییر فایل در manifest پیش از اعمال، و اینکه `dist/`
-تولیدی است (مستقیم ویرایش نمی‌شود — `src/` را تغییر دهید و `./build.sh` بزنید).
+| | |
+| --- | --- |
+| [User guide](docs/GUIDE.md) | every menu and command |
+| [FAQ](docs/FAQ.md) | Is Quick enough? Why tier M? Settings after reboot? |
+| [Tunnels & relays](docs/TUNNELS.md) | RSS, RPS, MTU/MSS, fast path, A/B testing |
+| [Roles](docs/ROLES.md) | detection, decision rules, capacity |
+| [Kernel settings](docs/SYSCTL.md) | every setting with its rationale |
+| [Rollback](docs/ROLLBACK.md) | what is recorded and how it is undone |
+| [Architecture](docs/ARCHITECTURE.md) | source layout, extending, tests |
+| [Changelog](CHANGELOG.md) · [Roadmap](ROADMAP.md) | history and plans |
 
-## 👤 سازنده
+Persian: [README.fa.md](README.fa.md) · [GUIDE.fa.md](docs/GUIDE.fa.md) ·
+[FAQ.fa.md](docs/FAQ.fa.md) · [TUNNELS.fa.md](docs/TUNNELS.fa.md).
+Contributor rules: [CLAUDE.md](CLAUDE.md).
 
-- سازنده: **UnknownZero** — تلگرام: **@UnknownZero**
-- مجوز: [MIT](LICENSE)
+## Author
 
-*English documentation: [README_en.md](README_en.md)*
+**UnknownZero** — Telegram **@UnknownZero** · License: [MIT](LICENSE)

@@ -26,8 +26,8 @@ jobs:
           echo "VERSION and tag agree on ${file_version}."
 
       # Builds dist/ and asserts it parses and reports the tagged version.
-      - name: Build and smoke test
-        run: bash tests/smoke.sh
+      - name: Build, smoke and unit tests
+        run: bash tests/smoke.sh && bash tests/unit.sh
 
       - name: Checksums
         run: cd dist && sha256sum server-tools.sh > SHA256SUMS

@@ -10,38 +10,65 @@ SRC_DIR="${ROOT_DIR}/src"
 OUT_FILE="${ROOT_DIR}/dist/server-tools.sh"
 VERSION="$(tr -d '[:space:]' <"${ROOT_DIR}/VERSION")"
 
-# Concatenation order is significant: header first, then core, modules,
-# menu, and the entrypoint last. New src files must be added here.
+# Concatenation order: header first (strict mode, constants), then lib →
+# state → engine → tuners → features → ui, and the entrypoint last. Bash
+# resolves functions at call time, so only top-level statements (readonly
+# constants, the final main call) depend on this order.
 SOURCES=(
   00-header.sh
-  core/colors.sh
-  core/log.sh
-  core/ui.sh
-  core/utils.sh
-  core/state.sh
-  core/backup.sh
-  modules/detect.sh
-  modules/sysinfo.sh
-  modules/profile.sh
-  modules/sysctl.sh
-  modules/dns.sh
-  modules/swap.sh
-  modules/limits.sh
-  modules/extras.sh
-  modules/perf.sh
-  modules/security.sh
-  modules/vpn.sh
-  modules/ipv6.sh
-  modules/kernel.sh
-  modules/mirror.sh
-  modules/installer.sh
-  modules/tools.sh
-  modules/selfupdate.sh
-  modules/optimize.sh
-  modules/doctor.sh
-  menu.sh
+  lib/term.sh
+  lib/log.sh
+  lib/ui.sh
+  lib/sys.sh
+  lib/net.sh
+  lib/fw.sh
+  lib/deps.sh
+  state/config.sh
+  state/manifest.sh
+  state/backup.sh
+  engine/facts.sh
+  engine/roles.sh
+  engine/capacity.sh
+  engine/policy.sh
+  engine/runner.sh
+  tuners/sysctl.sh
+  tuners/qdisc.sh
+  tuners/nic.sh
+  tuners/mss.sh
+  tuners/tunnel.sh
+  tuners/swap.sh
+  tuners/limits.sh
+  tuners/extras.sh
+  tuners/dns.sh
+  features/notrack.sh
+  features/flowtable.sh
+  features/security.sh
+  features/ipv6.sh
+  features/kernel.sh
+  features/mirror.sh
+  features/docker.sh
+  features/installer.sh
+  features/tools.sh
+  features/selfupdate.sh
+  features/diagnose.sh
+  features/sysinfo.sh
+  features/doctor.sh
+  state/migrate.sh
+  ui/flows.sh
+  ui/menu.sh
   99-main.sh
 )
+
+# Every src file must be listed exactly once — a forgotten file would build
+# "successfully" into a program with missing functions.
+mapfile -t _on_disk < <(cd "$SRC_DIR" && find . -name '*.sh' | sed 's#^\./##' | sort)
+mapfile -t _listed < <(printf '%s\n' "${SOURCES[@]}" | sort)
+if [[ "${_on_disk[*]}" != "${_listed[*]}" ]]; then
+  printf 'build.sh: SOURCES does not match src/ — add/remove entries:\n' >&2
+  # diff exits 1 when the lists differ — that output IS the report.
+  diff <(printf '%s\n' "${_listed[@]}") <(printf '%s\n' "${_on_disk[@]}") >&2 || :
+  exit 1
+fi
 
 mkdir -p "${ROOT_DIR}/dist"
 
